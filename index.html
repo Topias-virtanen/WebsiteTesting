@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        #game-board {
+            display: grid;
+            justify-content: center;
+            gap: 2px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            background-color: #ccc;
+            border: 1px solid #888;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .cell.revealed {
+            background-color: #eee;
+            cursor: default;
+        }
+        .cell.mine {
+            background-color: red;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Minesweeper</h1>
+    <p>Click to reveal cells. Avoid the mines!</p>
+    <div id="game-board"></div>
+
+    <script>
+        const boardSize = 10;
+        const mineCount = 15;
+        const board = [];
+        const gameBoard = document.getElementById('game-board');
+
+        function createBoard() {
+            // Set grid size in CSS
+            gameBoard.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+
+            // Initialize board
+            for (let row = 0; row < boardSize; row++) {
+                const rowArray = [];
+                for (let col = 0; col < boardSize; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+
+                    // Add click event for cell
+                    cell.addEventListener('click', () => revealCell(row, col));
+
+                    gameBoard.appendChild(cell);
+                    rowArray.push({ isMine: false, revealed: false, element: cell });
+                }
+                board.push(rowArray);
+            }
+
+            // Place mines randomly
+            placeMines();
+        }
+
+        function placeMines() {
+            let placedMines = 0;
+            while (placedMines < mineCount) {
+                const row = Math.floor(Math.random() * boardSize);
+                const col = Math.floor(Math.random() * boardSize);
+
+                if (!board[row][col].isMine) {
+                    board[row][col].isMine = true;
+                    placedMines++;
+                }
+            }
+        }
+
+        function revealCell(row, col) {
+            const cell = board[row][col];
+            if (cell.revealed) return;
+
+            cell.revealed = true;
+            cell.element.classList.add('revealed');
+
+            if (cell.isMine) {
+                cell.element.classList.add('mine');
+                cell.element.textContent = '💣';
+                alert('Game Over!');
+                return;
+            }
+
+            const mineCount = countMinesAround(row, col);
+            if (mineCount > 0) {
+                cell.element.textContent = mineCount;
+            } else {
+                revealAdjacentCells(row, col);
+            }
+        }
+
+        function countMinesAround(row, col) {
+            let count = 0;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const newRow = row + dr;
+                    const newCol = col + dc;
+                    if (isValidCell(newRow, newCol) && board[newRow][newCol].isMine) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function revealAdjacentCells(row, col) {
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const newRow = row + dr;
+                    const newCol = col + dc;
+                    if (isValidCell(newRow, newCol) && !board[newRow][newCol].revealed) {
+                        revealCell(newRow, newCol);
+                    }
+                }
+            }
+        }
+
+        function isValidCell(row, col) {
+            return row >= 0 && col >= 0 && row < boardSize && col < boardSize;
+        }
+
+        // Start the game
+        createBoard();
+    </script>
+</body>
+</html>
